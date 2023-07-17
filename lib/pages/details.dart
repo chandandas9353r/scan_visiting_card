@@ -53,30 +53,8 @@ class _DetailsState extends State<Details> {
                     future: user.getUser(),
                     builder: (context, snapshot) {
                       return ListView.builder(
-                        itemCount: user.detailsList.entries.length + 1,
+                        itemCount: user.detailsList.entries.length,
                         itemBuilder: (context, index) {
-                          if (index == user.detailsList.entries.length) {
-                            return GestureDetector(
-                              onTap: () async => await sendEmail(
-                                  snapshot.data!['email'][0].toString()),
-                              child: Container(
-                                margin: const EdgeInsets.all(10.0),
-                                padding: const EdgeInsets.all(10.0),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange,
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  "SEND EMAIL",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20.0,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -114,6 +92,26 @@ class _DetailsState extends State<Details> {
                         },
                       );
                     },
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () async =>
+                      await sendEmail(user.detailsList['email'][0].toString()),
+                  child: Container(
+                    margin: const EdgeInsets.all(10.0),
+                    padding: const EdgeInsets.all(10.0),
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "SEND EMAIL",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20.0,
+                      ),
+                    ),
                   ),
                 ),
               ],

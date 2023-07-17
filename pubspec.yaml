@@ -12,11 +12,12 @@ dependencies:
   cupertino_icons: ^1.0.2
   http:
   http_parser:
-  image_picker:
+  # image_picker:
   path:
   flutter_email_sender:
-  image_cropper:
+  # image_cropper:
   fluttertoast:
+  cunning_document_scanner:
 
 dev_dependencies:
   flutter_test:

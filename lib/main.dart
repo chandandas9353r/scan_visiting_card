@@ -19,6 +19,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       initialRoute: '/userdetails',
       routes: {
+        '/userdetails' : (context) => const UserDetails(),
         '/details' : (context) => const Details(),
       },
       debugShowCheckedModeBanner: false,

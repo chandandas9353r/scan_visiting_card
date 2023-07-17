@@ -7,7 +7,8 @@ import 'package:scan_visiting_card/components.dart';
 import 'package:scan_visiting_card/services.dart';
 import 'package:http/http.dart' as http;
 // import 'package:image_cropper/image_cropper.dart' as image_cropper;
-import 'package:cunning_document_scanner/cunning_document_scanner.dart' as scanner;
+import 'package:cunning_document_scanner/cunning_document_scanner.dart'
+    as scanner;
 
 class UserDetails extends StatefulWidget {
   const UserDetails({super.key});
@@ -47,8 +48,8 @@ class _UserDetailsState extends State<UserDetails> {
     // _image = File(image.path);
     // cropPicture();
     final imagesPath = await scanner.CunningDocumentScanner.getPictures();
-    if(imagesPath == null) return;
-    _image = File(imagesPath[imagesPath.length-1]);
+    if (imagesPath == null) return;
+    _image = File(imagesPath[imagesPath.length - 1]);
     imagesPath.clear();
     setState(() {});
   }
@@ -99,7 +100,7 @@ class _UserDetailsState extends State<UserDetails> {
       File image = _image as File;
       http.Response finalResponse =
           await httpExtractService.postScannedImage(image, '/parse');
-      if(!mounted) return;
+      if (!mounted) return;
       if (finalResponse.statusCode == 200) {
         await Navigator.of(context).pushNamed(
           '/details',
@@ -137,57 +138,54 @@ class _UserDetailsState extends State<UserDetails> {
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: (progress)
-              ? const CircularProgressIndicator()
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_image != null)
+                    SizedBox(
+                      height: 300.0,
+                      width: 300.0,
+                      child: Image.file(
+                        _image as File,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  if(_image != null) const SizedBox(height: 50.0,),
+                  GestureDetector(
+                    onTap: () async {
+                      getImage(true);
+                    },
+                    child: customComponents.customButton("CLICK"),
+                  ),
+                  if(_image != null) const SizedBox(height: 50.0,),
+                  if (_image != null)
+                    GestureDetector(
+                      onTap: () {
+                        progress = true;
+                        setState(() {});
+                        postData();
+                      },
+                      child: customComponents.customButton('SUBMIT'),
+                    ),
+                ],
+              ),
+              if (progress)
+                Container(
+                  foregroundDecoration:
+                      const BoxDecoration(color: Colors.black54),
+                  child: const Stack(
                     children: [
-                      if (_image != null)
-                        SizedBox(
-                          height: 300.0,
-                          width: 300.0,
-                          child: Image.file(
-                            _image as File,
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () async {
-                            getImage(true);
-                          },
-                          child: customComponents.customButton("CLICK"),
-                        ),
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //   crossAxisAlignment: CrossAxisAlignment.center,
-                      //   children: [
-                      //     GestureDetector(
-                      //       onTap: () async {
-                      //         getImage(true);
-                      //       },
-                      //       child: customComponents.customButton("CLICK"),
-                      //     ),
-                      //     GestureDetector(
-                      //       onTap: () async {
-                      //         getImage(false);
-                      //       },
-                      //       child: customComponents.customButton("PICK"),
-                      //     ),
-                      //   ],
-                      // ),
-                      if(_image != null) GestureDetector(
-                        onTap: (){
-                          progress = true;
-                          setState(() {});
-                          postData();
-                        },
-                        child: customComponents.customButton('SUBMIT'),
+                      Center(
+                        child: CircularProgressIndicator(),
                       ),
                     ],
                   ),
                 ),
+            ],
+          ),
         ),
       ),
     );

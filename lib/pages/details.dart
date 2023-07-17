@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:scan_visiting_card/components.dart';
 import 'package:scan_visiting_card/services.dart' as services;
 import 'package:flutter_email_sender/flutter_email_sender.dart' as sender;
@@ -13,7 +14,7 @@ class Details extends StatefulWidget {
 class _DetailsState extends State<Details> {
   final CustomComponents customComponents = CustomComponents();
 
-  bool popScreen (BuildContext context) {
+  bool popScreen(BuildContext context) {
     Navigator.of(context).pop(context);
     return true;
   }
@@ -22,15 +23,14 @@ class _DetailsState extends State<Details> {
     final sender.Email email = sender.Email(
       body: 'HELLO',
       subject: 'SCAN VISITING CARD',
-      recipients: ['chandandas9353r@gmail.com'],
+      recipients: [recepient],
       isHTML: false,
     );
-
-    try{
+    try {
       await sender.FlutterEmailSender.send(email);
-      debugPrint("MAIL SENT SUCCESSFULLY");
-    } catch(e){
-      debugPrint(e.toString());
+      Fluttertoast.showToast(msg: 'MAIL SENT');
+    } catch (e) {
+      Fluttertoast.showToast(msg: e.toString());
     }
   }
 
@@ -39,76 +39,84 @@ class _DetailsState extends State<Details> {
     final arguments = (ModalRoute.of(context)!.settings.arguments ??
         <String, dynamic>{}) as Map;
     services.User user = services.User(response: arguments['response']);
-
     return WillPopScope(
       onWillPop: () async => popScreen(context),
       child: Scaffold(
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
-            child: FutureBuilder(
-              future: user.getUser(),
-              builder: (context, snapshot) {
-                return ListView.builder(
-                  itemCount: user.detailsList.entries.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == user.detailsList.entries.length) {
-                      return GestureDetector(
-                        onTap: () async => await sendEmail(snapshot.data!.values.elementAt(4).toString()),
-                        child: Container(
-                          margin: const EdgeInsets.all(10.0),
-                          padding: const EdgeInsets.all(10.0),
-                          decoration: BoxDecoration(
-                            color: Colors.orange,
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                          alignment: Alignment.center,
-                          child: const Text(
-                            "SEND EMAIL",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20.0,
-                            ),
-                          ),
-                        ),
-                      );
-                    } else {
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              snapshot.data!.keys
-                                  .elementAt(index)
-                                  .toString()
-                                  .toUpperCase()
-                                  .replaceAll('_', ' '),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 3,
-                            child: TextField(
-                              textAlign: TextAlign.end,
-                              decoration: const InputDecoration(
-                                  contentPadding: EdgeInsets.all(0.0),
-                                  border: InputBorder.none),
-                              controller: TextEditingController(
-                                  text: snapshot.data!.values
+            child: Column(
+              children: [
+                customComponents.customButton("USER DETAILS"),
+                Expanded(
+                  child: FutureBuilder(
+                    future: user.getUser(),
+                    builder: (context, snapshot) {
+                      return ListView.builder(
+                        itemCount: user.detailsList.entries.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == user.detailsList.entries.length) {
+                            return GestureDetector(
+                              onTap: () async => await sendEmail(
+                                  snapshot.data!['email'][0].toString()),
+                              child: Container(
+                                margin: const EdgeInsets.all(10.0),
+                                padding: const EdgeInsets.all(10.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange,
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  "SEND EMAIL",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20.0,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  snapshot.data!.keys
                                       .elementAt(index)
-                                      .toString()),
-                              readOnly: true,
-                              showCursor: false,
-                              enableInteractiveSelection: true,
-                              keyboardType: TextInputType.multiline,
-                              maxLines: null,
-                            ),
-                          ),
-                        ],
+                                      .toString()
+                                      .toUpperCase()
+                                      .replaceAll('_', ' '),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: TextField(
+                                  textAlign: TextAlign.end,
+                                  decoration: const InputDecoration(
+                                      contentPadding: EdgeInsets.all(0.0),
+                                      border: InputBorder.none),
+                                  controller: TextEditingController(
+                                      text: snapshot.data!.values
+                                          .elementAt(index)
+                                          .toString()
+                                          .replaceAll('[', '')
+                                          .replaceAll(']', '')),
+                                  readOnly: true,
+                                  showCursor: false,
+                                  enableInteractiveSelection: true,
+                                  keyboardType: TextInputType.multiline,
+                                  maxLines: null,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       );
-                    }
-                  },
-                );
-              },
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ),

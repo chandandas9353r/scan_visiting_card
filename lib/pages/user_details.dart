@@ -101,6 +101,7 @@ class _UserDetailsState extends State<UserDetails> {
       http.Response finalResponse =
           await httpExtractService.postScannedImage(image, '/parse');
       if (!mounted) return;
+      print(finalResponse.statusCode);
       if (finalResponse.statusCode >= 200 && finalResponse.statusCode < 300) {
         await Navigator.of(context).pushNamed(
           '/details',
@@ -108,7 +109,11 @@ class _UserDetailsState extends State<UserDetails> {
             'response': finalResponse,
           },
         );
-      } else if (finalResponse.statusCode >= 400 && finalResponse.statusCode < 500) {
+        progress = false;
+        isCamera = false;
+        _image = null;
+        setState(() {});
+      } else if (finalResponse.statusCode >= 500 && finalResponse.statusCode < 600) {
         progress = false;
         isCamera = false;
         _image = null;
@@ -122,7 +127,7 @@ class _UserDetailsState extends State<UserDetails> {
           fontSize: 16.0,
         );
         setState(() {});
-      } else if (finalResponse.statusCode >= 500 && finalResponse.statusCode < 600) {
+      } else if (finalResponse.statusCode >= 400 && finalResponse.statusCode < 500) {
         Fluttertoast.showToast(
           msg: 'RETRYING',
           toastLength: Toast.LENGTH_LONG,
@@ -148,11 +153,6 @@ class _UserDetailsState extends State<UserDetails> {
         setState(() {});
       }
     }
-    setState(() {
-      progress = false;
-      isCamera = false;
-      _image = null;
-    });
   }
 
   @override

@@ -52,7 +52,6 @@ class _DetailsState extends State<Details> {
                   child: FutureBuilder(
                     future: user.getUser(),
                     builder: (context, snapshot) {
-                      print(user.detailsList['phone_number']);
                       return ListView.builder(
                         itemCount: user.detailsList.entries.length,
                         itemBuilder: (context, index) {

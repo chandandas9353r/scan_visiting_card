@@ -101,19 +101,43 @@ class _UserDetailsState extends State<UserDetails> {
       http.Response finalResponse =
           await httpExtractService.postScannedImage(image, '/parse');
       if (!mounted) return;
-      if (finalResponse.statusCode == 200) {
+      if (finalResponse.statusCode >= 200 && finalResponse.statusCode < 300) {
         await Navigator.of(context).pushNamed(
           '/details',
           arguments: {
             'response': finalResponse,
           },
         );
-      } else {
+      } else if (finalResponse.statusCode >= 400 && finalResponse.statusCode < 500) {
         progress = false;
         isCamera = false;
         _image = null;
         Fluttertoast.showToast(
-          msg: 'WRONG IMAGE',
+          msg: "WRONG IMAGE",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+        setState(() {});
+      } else if (finalResponse.statusCode >= 500 && finalResponse.statusCode < 600) {
+        Fluttertoast.showToast(
+          msg: 'RETRYING',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+        postData();
+      } else {
+        progress = false;
+        isCamera = false;
+        Fluttertoast.showToast(
+          msg: "PLEASE TRY AGAIN",
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.BOTTOM,
           timeInSecForIosWeb: 1,

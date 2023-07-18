@@ -59,6 +59,7 @@ class _DetailsState extends State<Details> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
+                                flex: 2,
                                 child: Text(
                                   snapshot.data!.keys
                                       .elementAt(index)

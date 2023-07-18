@@ -16,8 +16,8 @@ class Model{
     final Map<String, dynamic> data = <String, dynamic>{};
     data['name'] = name;
     data['address'] = address;
-    data['phone_number'] = phoneNumber[0];
-    data['fax'] = fax[0];
+    data['phone_number'] = (phoneNumber.isNotEmpty) ? phoneNumber[0] : phoneNumber;
+    data['fax'] = (fax.isNotEmpty) ? fax[0] : fax;
     data['email'] = email;
     data['designation'] = designation;
     data['company_name'] = companyName;

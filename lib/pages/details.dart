@@ -47,13 +47,25 @@ class _DetailsState extends State<Details> {
             padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
-                customComponents.customButton("USER DETAILS"),
+                customComponents.customButton(
+                  color: Colors.orange,
+                  child: customComponents.customText(
+                    data: "USER DETAILS",
+                    size: 20.0,
+                    direction: TextDirection.ltr,
+                  ),
+                ),
                 Expanded(
                   child: FutureBuilder(
                     future: user.getUser(),
                     builder: (context, snapshot) {
-                      return ListView.builder(
+                      return ListView.separated(
                         itemCount: user.detailsList.entries.length,
+                        separatorBuilder: (context, index) {
+                          return const Divider(
+                            color: Colors.green
+                          );
+                        },
                         itemBuilder: (context, index) {
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -98,20 +110,12 @@ class _DetailsState extends State<Details> {
                 GestureDetector(
                   onTap: () async =>
                       await sendEmail(user.detailsList['email'][0].toString()),
-                  child: Container(
-                    margin: const EdgeInsets.all(10.0),
-                    padding: const EdgeInsets.all(10.0),
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Text(
-                      "SEND EMAIL",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20.0,
-                      ),
+                  child: customComponents.customButton(
+                    color: Colors.green,
+                    child: customComponents.customText(
+                      data: "Send Email",
+                      size: 20.0,
+                      direction: TextDirection.ltr,
                     ),
                   ),
                 ),

@@ -1,14 +1,10 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:fluttertoast/fluttertoast.dart';
-// import 'package:image_picker/image_picker.dart' as picker;
 import 'package:flutter/material.dart';
 import 'package:scan_visiting_card/components.dart';
 import 'package:scan_visiting_card/services.dart';
 import 'package:http/http.dart' as http;
-// import 'package:image_cropper/image_cropper.dart' as image_cropper;
-import 'package:cunning_document_scanner/cunning_document_scanner.dart'
-    as scanner;
 
 class UserDetails extends StatefulWidget {
   const UserDetails({super.key});
@@ -19,90 +15,66 @@ class UserDetails extends StatefulWidget {
 
 class _UserDetailsState extends State<UserDetails> {
   CustomComponents customComponents = CustomComponents();
-  HTTPService httpExtractService = HTTPService(url: 'http://173.249.8.98:5005');
+  ImageService imageService = ImageService();
+  HTTPService httpExtractService = HTTPService(url: 'http://173.249.8.98');
 
   File? _image;
-  Uint8List? convertedImage, imageBytes;
+  Uint8List? _byteImage;
+  bool isCamera = false;
   bool progress = false;
-  bool? isCamera;
+  bool isProcessing = false;
 
   @override
   void initState() {
+    super.initState();
     _image = null;
+    _byteImage = null;
     progress = false;
     isCamera = false;
-    super.initState();
+    isProcessing = false;
   }
 
-  Future<void> getImage(bool isCamera) async {
-    // picker.XFile? image = (isCamera)
-    //     ? await picker.ImagePicker().pickImage(
-    //         source: picker.ImageSource.camera,
-    //         imageQuality: 50,
-    //       )
-    //     : await picker.ImagePicker().pickImage(
-    //         source: picker.ImageSource.gallery,
-    //         imageQuality: 50,
-    //       );
-    // if(image == null) return;
-    // _image = File(image.path);
-    // cropPicture();
-    final imagesPath = await scanner.CunningDocumentScanner.getPictures();
-    if (imagesPath == null) return;
-    _image = File(imagesPath[imagesPath.length - 1]);
-    imagesPath.clear();
-    setState(() {});
+  @override
+  void dispose() {
+    _image = null;
+    _byteImage = null;
+    progress = false;
+    isCamera = false;
+    isProcessing = false;
+    super.dispose();
   }
-
-  // Future<void> cropPicture() async {
-  //   if(_image != null){
-  //     File image = _image as File;
-  //     image_cropper.CroppedFile? croppedFile;
-  //     croppedFile = await image_cropper.ImageCropper().cropImage(
-  //       sourcePath: image.path,
-  //       compressFormat: image_cropper.ImageCompressFormat.jpg,
-  //       compressQuality: 100,
-  //       uiSettings: [
-  //         image_cropper.AndroidUiSettings(
-  //             toolbarTitle: 'Cropper',
-  //             toolbarColor: Colors.deepOrange,
-  //             toolbarWidgetColor: Colors.white,
-  //             initAspectRatio: image_cropper.CropAspectRatioPreset.original,
-  //             lockAspectRatio: false),
-  //         image_cropper.IOSUiSettings(
-  //           title: 'Cropper',
-  //         ),
-  //         image_cropper.WebUiSettings(
-  //           context: context,
-  //           presentStyle: image_cropper.CropperPresentStyle.dialog,
-  //           boundary: const image_cropper.CroppieBoundary(
-  //             width: 520,
-  //             height: 520,
-  //           ),
-  //           viewPort: const image_cropper.CroppieViewPort(
-  //               width: 480, height: 480, type: 'circle'),
-  //           enableExif: true,
-  //           enableZoom: true,
-  //           showZoomer: true,
-  //         ),
-  //       ],
-  //     );
-  //     if(croppedFile == null) return;
-  //     _image = File(croppedFile.path);
-  //     progress = true;
-  //     postData();
-  //     setState(() {});
-  //   }
-  // }
 
   Future<void> postData() async {
     if (_image != null) {
       File image = _image as File;
       http.Response finalResponse =
-          await httpExtractService.postScannedImage(image, '/parse');
+          await httpExtractService.postScannedImage(image, ':5005/parse');
       if (!mounted) return;
-      print(finalResponse.statusCode);
       if (finalResponse.statusCode >= 200 && finalResponse.statusCode < 300) {
+        http.Response response = await httpExtractService.postData(
+            finalResponse, image, ':5020/data');
+        if (!mounted) return;
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          Fluttertoast.showToast(
+            msg: "SUCCESS",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.black,
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        } else {
+          Fluttertoast.showToast(
+            msg: "FAILED",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.black,
+            textColor: Colors.white,
+            fontSize: 16.0,
+          );
+        }
         await Navigator.of(context).pushNamed(
           '/details',
           arguments: {
@@ -110,13 +82,14 @@ class _UserDetailsState extends State<UserDetails> {
           },
         );
         progress = false;
-        isCamera = false;
         _image = null;
+        _byteImage = null;
         setState(() {});
-      } else if (finalResponse.statusCode >= 500 && finalResponse.statusCode < 600) {
+      } else if (finalResponse.statusCode >= 500 &&
+          finalResponse.statusCode < 600) {
         progress = false;
-        isCamera = false;
         _image = null;
+        _byteImage = null;
         Fluttertoast.showToast(
           msg: "WRONG IMAGE",
           toastLength: Toast.LENGTH_LONG,
@@ -127,9 +100,10 @@ class _UserDetailsState extends State<UserDetails> {
           fontSize: 16.0,
         );
         setState(() {});
-      } else if (finalResponse.statusCode >= 400 && finalResponse.statusCode < 500) {
+      } else if (finalResponse.statusCode >= 400 &&
+          finalResponse.statusCode < 500) {
         Fluttertoast.showToast(
-          msg: 'RETRYING',
+          msg: 'SERVER ISSUE. PLEASE TRY AGAIN LATER',
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.BOTTOM,
           timeInSecForIosWeb: 1,
@@ -137,10 +111,10 @@ class _UserDetailsState extends State<UserDetails> {
           textColor: Colors.white,
           fontSize: 16.0,
         );
-        postData();
       } else {
+        _byteImage = null;
+        _image = null;
         progress = false;
-        isCamera = false;
         Fluttertoast.showToast(
           msg: "PLEASE TRY AGAIN",
           toastLength: Toast.LENGTH_LONG,
@@ -157,61 +131,176 @@ class _UserDetailsState extends State<UserDetails> {
 
   @override
   Widget build(BuildContext context) {
-    // final arguments = (ModalRoute.of(context)?.settings.arguments ?? <String, dynamic>{}) as Map;
-    // Uint8List bytes = arguments['bytes'];
     return Scaffold(
       body: SafeArea(
-        child: Center(
           child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (_image != null)
-                    SizedBox(
-                      height: 300.0,
-                      width: 300.0,
-                      child: Image.file(
-                        _image as File,
-                        fit: BoxFit.contain,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    Expanded(
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          AspectRatio(
+                            aspectRatio: 9.0 / 16.0,
+                            child: Container(
+                              alignment: Alignment.center,
+                              foregroundDecoration: BoxDecoration(
+                                color: (isProcessing)
+                                    ? Colors.black54
+                                    : Colors.transparent,
+                              ),
+                              child: (_byteImage != null)
+                                  ? Image.memory(_byteImage as Uint8List)
+                                  : Container(),
+                            ),
+                          ),
+                          if (isProcessing) const CircularProgressIndicator(),
+                        ],
                       ),
                     ),
-                  if(_image != null) const SizedBox(height: 50.0,),
-                  GestureDetector(
-                    onTap: () async {
-                      getImage(true);
-                    },
-                    child: customComponents.customButton("CLICK"),
-                  ),
-                  if(_image != null) const SizedBox(height: 50.0,),
-                  if (_image != null)
-                    GestureDetector(
-                      onTap: () {
-                        progress = true;
-                        setState(() {});
-                        postData();
-                      },
-                      child: customComponents.customButton('SUBMIT'),
+                    Flex(
+                      direction: Axis.horizontal,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: () async {
+                              _image = await imageService.getImage(true);
+                              isCamera = true;
+                              setState(() {});
+                              _byteImage = (_image as File).readAsBytesSync();
+                              setState(() {});
+                            },
+                            child: customComponents.customButton(
+                              color: Colors.green,
+                              child: customComponents.customText(
+                                data: "Camera",
+                                direction: TextDirection.ltr,
+                                size: 20.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: () async {
+                              _image = await imageService.getImage(false);
+                              isCamera = false;
+                              setState(() {});
+                              _byteImage = (_image as File).readAsBytesSync();
+                              setState(() {});
+                            },
+                            child: customComponents.customButton(
+                              color: Colors.green,
+                              child: customComponents.customText(
+                                data: "Gallery",
+                                size: 20.0,
+                                direction: TextDirection.ltr,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                ],
-              ),
-              if (progress)
-                Container(
-                  foregroundDecoration:
-                      const BoxDecoration(color: Colors.black54),
-                  child: const Stack(
-                    children: [
-                      Center(
-                        child: CircularProgressIndicator(),
+                    if (_byteImage != null && !isCamera)
+                      GestureDetector(
+                        onTap: () {
+                          progress = true;
+                          setState(() {});
+                          postData();
+                        },
+                        child: customComponents.customButton(
+                          color: Colors.green,
+                          child: customComponents.customText(
+                            data: "Submit",
+                            size: 20.0,
+                            direction: TextDirection.ltr,
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
+                    if (_byteImage != null && isCamera)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () async {
+                                  isProcessing = true;
+                                  setState(() {});
+                                  _byteImage = await imageService.rotateImage(
+                                      _byteImage as Uint8List, 90);
+                                  await (_image as File)
+                                      .writeAsBytes(_byteImage as Uint8List);
+                                  isProcessing = false;
+                                  setState(() {});
+                                },
+                                child: customComponents.customButton(
+                                  color: Colors.green,
+                                  child: const Icon(
+                                    Icons.rotate_90_degrees_cw_outlined,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () async {
+                                  isProcessing = true;
+                                  setState(() {});
+                                  _byteImage = await imageService.rotateImage(
+                                      _byteImage as Uint8List, -90);
+                                  await (_image as File)
+                                      .writeAsBytes(_byteImage as Uint8List);
+                                  isProcessing = false;
+                                  setState(() {});
+                                },
+                                child: customComponents.customButton(
+                                  color: Colors.green,
+                                  child: const Icon(
+                                    Icons.rotate_90_degrees_ccw_outlined,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              progress = true;
+                              setState(() {});
+                              postData();
+                            },
+                            child: customComponents.customButton(
+                              color: Colors.green,
+                              child: customComponents.customText(
+                                data: "Submit",
+                                size: 20.0,
+                                direction: TextDirection.ltr,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
                 ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+          if (progress)
+            Container(
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(color: Colors.black54),
+              child: const CircularProgressIndicator(),
+            ),
+        ],
+      )),
     );
   }
 }

@@ -1,39 +1,36 @@
 import 'package:flutter/material.dart';
 
 class CustomComponents {
-  Widget customButton(String text) {
+  Widget customButton({
+    required  color,
+    required Widget child,
+  }) {
     return Container(
+      alignment: Alignment.center,
       margin: const EdgeInsets.all(10.0),
-      padding: const EdgeInsets.all(10.0),
-      decoration: const BoxDecoration(
-        color: Colors.orange,
-        borderRadius: BorderRadius.all(Radius.circular(10.0)),
+      padding: const EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: const BorderRadius.all(Radius.circular(10.0)),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-          fontSize: 30,
-        ),
-      ),
+      child: child,
     );
   }
 
   Widget customText({
-    String key = '',
+    String data = '',
     double size = 12.0,
-    FontWeight weight = FontWeight.w400,
     TextDirection direction = TextDirection.ltr,
   }) {
     return Text(
-      key,
+      data,
       style: TextStyle(
         color: Colors.white,
         fontSize: size,
-        fontWeight: weight,
+        fontWeight: FontWeight.w400,
       ),
       textDirection: direction,
+      textAlign: TextAlign.center,
     );
   }
 }

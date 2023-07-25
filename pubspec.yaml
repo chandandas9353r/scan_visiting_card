@@ -11,13 +11,13 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.2
   http:
-  http_parser:
-  image_picker:
-  path:
-  flutter_email_sender:
-  image_cropper:
   fluttertoast:
+  flutter_email_sender:
+  http_parser:
+  path:
   cunning_document_scanner:
+  image_picker:
+  image_cropper:
   flutter_image_compress:
 
 dev_dependencies:

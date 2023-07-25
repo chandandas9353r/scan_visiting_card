@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:scan_visiting_card/components.dart';
 import 'package:scan_visiting_card/services.dart' as services;
-import 'package:flutter_email_sender/flutter_email_sender.dart' as sender;
 
 class Details extends StatefulWidget {
   const Details({super.key});
@@ -19,21 +17,6 @@ class _DetailsState extends State<Details> {
     return true;
   }
 
-  Future<void> sendEmail(String recepient) async {
-    final sender.Email email = sender.Email(
-      body: 'HELLO',
-      subject: 'SCAN VISITING CARD',
-      recipients: [recepient],
-      isHTML: false,
-    );
-    try {
-      await sender.FlutterEmailSender.send(email);
-      Fluttertoast.showToast(msg: 'MAIL SENT');
-    } catch (e) {
-      Fluttertoast.showToast(msg: e.toString());
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final arguments = (ModalRoute.of(context)!.settings.arguments ??
@@ -42,19 +25,21 @@ class _DetailsState extends State<Details> {
     return WillPopScope(
       onWillPop: () async => popScreen(context),
       child: Scaffold(
+        appBar: AppBar(
+          title: const Text('USER DETAILS'),
+          centerTitle: true,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(20.0),
+            ),
+          ),
+          elevation: 5,
+        ),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               children: [
-                customComponents.customButton(
-                  color: Colors.orange,
-                  child: customComponents.customText(
-                    data: "USER DETAILS",
-                    size: 20.0,
-                    direction: TextDirection.ltr,
-                  ),
-                ),
                 Expanded(
                   child: FutureBuilder(
                     future: user.getUser(),
@@ -108,14 +93,16 @@ class _DetailsState extends State<Details> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () async =>
-                      await sendEmail(user.detailsList['email'][0].toString()),
+                  onTap: () async {
+                    services.EmailService emailService = services.EmailService();
+                    await emailService.sendEmail(user.detailsList['email'][0].toString());
+                  },
                   child: customComponents.customButton(
                     color: Colors.green,
                     child: customComponents.customText(
                       data: "Send Email",
+                      color: Colors.white,
                       size: 20.0,
-                      direction: TextDirection.ltr,
                     ),
                   ),
                 ),

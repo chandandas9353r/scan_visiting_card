@@ -10,6 +10,8 @@ import 'package:cunning_document_scanner/cunning_document_scanner.dart' as scann
 import 'package:image_picker/image_picker.dart' as picker;
 import 'package:image_cropper/image_cropper.dart' as cropper;
 import 'package:flutter_image_compress/flutter_image_compress.dart' as image_editor;
+import 'package:flutter_email_sender/flutter_email_sender.dart' as sender;
+import 'package:fluttertoast/fluttertoast.dart' as toast;
 
 class ImageService{
   Future<File?> getImage(bool isCamera) async {
@@ -92,20 +94,78 @@ class HTTPService {
     return response;
   }
 
-  Future<http.Response> postData(http.Response getResponse, File image, String path) async {
-    String fileExtension = p.extension(image.path);
-    fileExtension = fileExtension.split('.')[1];
-    Map map = {
-      "data" : '"${getResponse.body.toString()}"',
-      "filename" : '"output.$fileExtension"',
-      "file" : '''"b'${base64.encode(image.readAsBytesSync())}'"''',
-    };
-    var response = await http.post(
-      Uri.parse(url+path),
-      headers: {"Content-Type": "application/json"},
-      body: json.encode(map),
-    );
-    return response;
+  Future<bool> postData(http.Response finalResponse, File image, String path) async {
+    if (finalResponse.statusCode >= 200 && finalResponse.statusCode < 300) {
+      String fileExtension = p.extension(image.path);
+      fileExtension = fileExtension.split('.')[1];
+      Map map = {
+        "data" : '"${finalResponse.body.toString()}"',
+        "filename" : '"output.$fileExtension"',
+        "file" : '''"b'${base64.encode(image.readAsBytesSync())}'"''',
+      };
+      http.Response response = await http.post(
+        Uri.parse(url+path),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode(map),
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        toast.Fluttertoast.showToast(
+          msg: "SUCCESS",
+          toastLength: toast.Toast.LENGTH_LONG,
+          gravity: toast.ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      } else {
+        toast.Fluttertoast.showToast(
+          msg: "FAILED",
+          toastLength: toast.Toast.LENGTH_LONG,
+          gravity: toast.ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16.0,
+        );
+      }
+      return true;
+    } else if (finalResponse.statusCode >= 500 &&
+        finalResponse.statusCode < 600) {
+      toast.Fluttertoast.showToast(
+        msg: "WRONG IMAGE",
+        toastLength: toast.Toast.LENGTH_LONG,
+        gravity: toast.ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      return false;
+    } else if (finalResponse.statusCode >= 400 &&
+        finalResponse.statusCode < 500) {
+      toast.Fluttertoast.showToast(
+        msg: 'SERVER ISSUE. PLEASE TRY AGAIN LATER',
+        toastLength: toast.Toast.LENGTH_LONG,
+        gravity: toast.ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      return false;
+    } else {
+      toast.Fluttertoast.showToast(
+        msg: "PLEASE TRY AGAIN",
+        toastLength: toast.Toast.LENGTH_LONG,
+        gravity: toast.ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+      return false;
+    }
   }
 }
 
@@ -132,5 +192,22 @@ class User{
         detailsList.addEntries(user.toJson().entries);
       }
     return detailsList;
+  }
+}
+
+class EmailService{
+  Future<void> sendEmail(String recepient) async {
+    final sender.Email email = sender.Email(
+      body: 'HELLO',
+      subject: 'SCAN VISITING CARD',
+      recipients: [recepient],
+      isHTML: false,
+    );
+    try {
+      await sender.FlutterEmailSender.send(email);
+      toast.Fluttertoast.showToast(msg: 'MAIL SENT');
+    } catch (e) {
+      toast.Fluttertoast.showToast(msg: e.toString());
+    }
   }
 }

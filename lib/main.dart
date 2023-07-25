@@ -17,9 +17,8 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: '/userdetails',
+      initialRoute: '/',
       routes: {
-        '/userdetails' : (context) => const UserDetails(),
         '/details' : (context) => const Details(),
       },
       debugShowCheckedModeBanner: false,

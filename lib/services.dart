@@ -1,4 +1,4 @@
-import 'dart:convert';
+ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -9,9 +9,39 @@ import 'package:edge_detection/edge_detection.dart' as detector;
 import 'package:scan_visiting_card/model.dart' as model;
 import 'package:flutter_email_sender/flutter_email_sender.dart' as sender;
 import 'package:fluttertoast/fluttertoast.dart' as toast;
+import 'package:permission_handler/permission_handler.dart' as handler;
+
+void showToast(String msg){
+  toast.Fluttertoast.showToast(
+    msg: msg,
+    toastLength: toast.Toast.LENGTH_LONG,
+    gravity: toast.ToastGravity.BOTTOM,
+    timeInSecForIosWeb: 1,
+    backgroundColor: Colors.black,
+    textColor: Colors.white,
+    fontSize: 16.0,
+  );
+}
+
+Future<handler.PermissionStatus> tryAccessCamera() async {
+  await handler.Permission.camera.request();
+  return await handler.Permission.camera.status;
+}
 
 class ImageService{
   Future<File?> getImage() async {
+    var status = await tryAccessCamera();
+    if(status == handler.PermissionStatus.denied ||
+      status == handler.PermissionStatus.permanentlyDenied){
+      showToast("PERMISSION DENIED");
+      status = await tryAccessCamera();
+      if(status == handler.PermissionStatus.denied ||
+        status == handler.PermissionStatus.permanentlyDenied){
+        showToast("GRANT CAMERA");
+        await handler.openAppSettings();
+      }
+      return null;
+    }
     String imagePath = join(
         (await provider.getApplicationSupportDirectory()).path,
         "${(DateTime.now().millisecondsSinceEpoch / 1000).round()}.png");
@@ -61,61 +91,21 @@ class HTTPService {
         body: json.encode(map),
       );
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        toast.Fluttertoast.showToast(
-          msg: "SUCCESS",
-          toastLength: toast.Toast.LENGTH_LONG,
-          gravity: toast.ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
+        showToast("SUCCESS");
       } else {
-        toast.Fluttertoast.showToast(
-          msg: "FAILED",
-          toastLength: toast.Toast.LENGTH_LONG,
-          gravity: toast.ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
+        showToast("FAILED");
       }
       return true;
     } else if (finalResponse.statusCode >= 500 &&
         finalResponse.statusCode < 600) {
-      toast.Fluttertoast.showToast(
-        msg: "WRONG IMAGE",
-        toastLength: toast.Toast.LENGTH_LONG,
-        gravity: toast.ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.black,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
+      showToast("WRONG IMAGE");
       return false;
     } else if (finalResponse.statusCode >= 400 &&
         finalResponse.statusCode < 500) {
-      toast.Fluttertoast.showToast(
-        msg: 'SERVER ISSUE. PLEASE TRY AGAIN LATER',
-        toastLength: toast.Toast.LENGTH_LONG,
-        gravity: toast.ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.black,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
+      showToast("SERVER ISSUE. PLEASE TRY AGAIN LATER");
       return false;
     } else {
-      toast.Fluttertoast.showToast(
-        msg: "PLEASE TRY AGAIN",
-        toastLength: toast.Toast.LENGTH_LONG,
-        gravity: toast.ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.black,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
+      showToast("PLEASE TRY AGAIN");
       return false;
     }
   }
@@ -157,9 +147,9 @@ class EmailService{
     );
     try {
       await sender.FlutterEmailSender.send(email);
-      toast.Fluttertoast.showToast(msg: 'MAIL SENT');
+      showToast('MAIL SENT');
     } catch (e) {
-      toast.Fluttertoast.showToast(msg: e.toString());
+      showToast(e.toString());
     }
   }
 }

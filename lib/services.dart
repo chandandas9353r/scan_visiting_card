@@ -1,75 +1,27 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as parser;
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart' as provider;
+import 'package:edge_detection/edge_detection.dart' as detector;
 import 'package:scan_visiting_card/model.dart' as model;
-import 'package:cunning_document_scanner/cunning_document_scanner.dart' as scanner;
-import 'package:image_picker/image_picker.dart' as picker;
-import 'package:image_cropper/image_cropper.dart' as cropper;
-import 'package:flutter_image_compress/flutter_image_compress.dart' as image_editor;
 import 'package:flutter_email_sender/flutter_email_sender.dart' as sender;
 import 'package:fluttertoast/fluttertoast.dart' as toast;
 
 class ImageService{
-  Future<File?> getImage(bool isCamera) async {
-    File image;
-    if(isCamera){
-      List<String>? images = await scanner.CunningDocumentScanner.getPictures();
-      if (images == null) return null;
-      image = File(images.last);
-    } else{
-      picker.XFile? pickedImage = await picker.ImagePicker().pickImage(
-        source: picker.ImageSource.gallery,
-        imageQuality: 50,
-        requestFullMetadata: false,
-      );
-      cropper.CroppedFile? croppedFile = await cropper.ImageCropper().cropImage(
-        sourcePath: (pickedImage as picker.XFile).path,
-        aspectRatioPresets: [
-          cropper.CropAspectRatioPreset.square,
-          cropper.CropAspectRatioPreset.ratio3x2,
-          cropper.CropAspectRatioPreset.original,
-          cropper.CropAspectRatioPreset.ratio5x4,
-          cropper.CropAspectRatioPreset.ratio16x9,
-        ],
-        compressQuality: 50,
-        cropStyle: cropper.CropStyle.rectangle,
-        uiSettings: [
-          cropper.AndroidUiSettings(
-            activeControlsWidgetColor: Colors.green,
-            hideBottomControls: false,
-            initAspectRatio: cropper.CropAspectRatioPreset.original,
-            lockAspectRatio: false,
-            toolbarColor: Colors.green,
-            toolbarWidgetColor: Colors.white,
-          ),
-        ],
-      );
-      if(croppedFile == null) return null;
-      image = File(croppedFile.path);
-    }
-    Uint8List? data = await image_editor.FlutterImageCompress.compressWithFile(
-      image.path,
-      autoCorrectionAngle: true,
-      keepExif: false,
-      quality: 50,
+  Future<File?> getImage() async {
+    String imagePath = join(
+        (await provider.getApplicationSupportDirectory()).path,
+        "${(DateTime.now().millisecondsSinceEpoch / 1000).round()}.png");
+    bool imageStored = await detector.EdgeDetection.detectEdge(
+      imagePath,
+      androidScanTitle: "Capture an Image",
+      androidCropTitle: "Enhance the Image",
     );
-    await image.writeAsBytes(data as Uint8List);
-    return image;
-  }
-
-  Future<Uint8List> rotateImage(Uint8List data, int angle) async {
-    Uint8List? rotatedImage = await image_editor.FlutterImageCompress.compressWithList(
-      data,
-      autoCorrectionAngle: false,
-      format: image_editor.CompressFormat.png,
-      quality: 50,
-      rotate: angle,
-    );
-    return rotatedImage;
+    if (!imageStored) return null;
+    return File(imagePath);
   }
 }
 
@@ -79,7 +31,7 @@ class HTTPService {
   HTTPService({required this.url});
 
   Future<http.Response> postScannedImage(File image, String path) async {
-    String fileExtension = p.extension(image.path);
+    String fileExtension = extension(image.path);
     fileExtension = fileExtension.split('.')[1];
     http.MultipartRequest request = http.MultipartRequest('POST', Uri.parse(url + path));
     request.files.add(
@@ -96,7 +48,7 @@ class HTTPService {
 
   Future<bool> postData(http.Response finalResponse, File image, String path) async {
     if (finalResponse.statusCode >= 200 && finalResponse.statusCode < 300) {
-      String fileExtension = p.extension(image.path);
+      String fileExtension = extension(image.path);
       fileExtension = fileExtension.split('.')[1];
       Map map = {
         "data" : '"${finalResponse.body.toString()}"',

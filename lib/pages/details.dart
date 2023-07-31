@@ -10,7 +10,6 @@ class Details extends StatefulWidget {
 }
 
 class _DetailsState extends State<Details> {
-  final CustomComponents customComponents = CustomComponents();
 
   bool popScreen(BuildContext context) {
     Navigator.of(context).pop(context);
@@ -52,6 +51,8 @@ class _DetailsState extends State<Details> {
                           );
                         },
                         itemBuilder: (context, index) {
+                          List<TextEditingController> controller = List.generate(snapshot.data!.length, (index) => TextEditingController());
+                          controller[index].text = snapshot.data!.values.elementAt(index).toString().replaceAll('[', '').replaceAll(']', '');
                           return Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -72,14 +73,12 @@ class _DetailsState extends State<Details> {
                                   decoration: const InputDecoration(
                                       contentPadding: EdgeInsets.all(0.0),
                                       border: InputBorder.none),
-                                  controller: TextEditingController(
-                                      text: snapshot.data!.values
-                                          .elementAt(index)
-                                          .toString()
-                                          .replaceAll('[', '')
-                                          .replaceAll(']', '')),
-                                  readOnly: true,
-                                  showCursor: false,
+                                  controller: controller[index],
+                                  onChanged: (value) {
+                                    user.detailsList.values.elementAt(index)[0] = value;
+                                  },
+                                  readOnly: false,
+                                  showCursor: true,
                                   enableInteractiveSelection: true,
                                   keyboardType: TextInputType.multiline,
                                   maxLines: null,
@@ -97,9 +96,9 @@ class _DetailsState extends State<Details> {
                     services.EmailService emailService = services.EmailService();
                     await emailService.sendEmail(user.detailsList['email'][0].toString());
                   },
-                  child: customComponents.customButton(
+                  child: customButton(
                     color: Colors.green,
-                    child: customComponents.customText(
+                    child: customText(
                       data: "Send Email",
                       color: Colors.white,
                       size: 20.0,

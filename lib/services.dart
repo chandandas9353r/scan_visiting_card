@@ -122,14 +122,14 @@ class User{
       final data = await jsonDecode((response).body.toString())['info'];
       for(Map<String,dynamic> i in data.cast()){
         model.Model user = model.Model(
-          name: i['name'],
-          address: i['address'],
-          phoneNumber: i['phone_number'],
-          fax: i['fax'],
-          email: i['email'],
-          designation: i['designation'],
-          companyName: i['company_name'],
-          website: i['website'],
+          name: i['name'] ?? [],
+          address: i['address'] ?? [],
+          phoneNumber: i['phone_number'] ?? [],
+          fax: i['fax'] ?? [],
+          email: i['email'] ?? [],
+          designation: i['designation'] ?? [],
+          companyName: i['company_name'] ?? [],
+          website: i['website'] ?? [],
         );
         detailsList.addEntries(user.toJson().entries);
       }
